@@ -1,13 +1,17 @@
 package suika.jp.nfcreader
 
+import android.app.PendingIntent
+import android.content.Intent
 import android.nfc.NfcAdapter
 import android.os.Bundle
 import android.support.v7.app.AppCompatActivity
-import android.widget.Toast
+import kotlinx.android.synthetic.main.activity_main.*
+import suika.jp.nfcreader.Utils.NfcChecker
 
 class MainActivity : AppCompatActivity() {
 
-    private lateinit var mNfcAdapter: NfcAdapter
+    private var mNfcAdapter: NfcAdapter? = null
+    private val NfcChecker: NfcChecker = NfcChecker()
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -15,16 +19,37 @@ class MainActivity : AppCompatActivity() {
 
         // NFCを扱うためのインスタンスを取得
         mNfcAdapter = NfcAdapter.getDefaultAdapter(this)
-        // NFCが搭載されているかチェック
+        this.NfcChecker.checkEnable(mNfcAdapter, this@MainActivity)
+    }
+
+    override fun onResume() {
+        super.onResume()
         if (mNfcAdapter != null) {
-            // NFC機能が有効になっているかチェック
-            if (!mNfcAdapter.isEnabled) {
-                // NFC機能が無効の場合はユーザへ通知
-                Toast.makeText(this@MainActivity, "NFC機能が無効です", Toast.LENGTH_SHORT).show()
-            }
-        } else {
-            // NFC非搭載の場合はユーザへ通知
-            Toast.makeText(this@MainActivity, "NFCが非搭載です", Toast.LENGTH_SHORT).show()
+            // 起動中のActivityが優先的にNFCを受け取れるよう設定
+            val intent: Intent = Intent(this@MainActivity, this::class.java).setFlags(Intent.FLAG_ACTIVITY_SINGLE_TOP)
+            val pendingIntent: PendingIntent = PendingIntent.getActivity(applicationContext, 0, intent, 0)
+            mNfcAdapter?.enableForegroundDispatch(this@MainActivity, pendingIntent, null, null)
+        }
+    }
+
+    override fun onPause() {
+        super.onPause()
+        if (mNfcAdapter != null) {
+            // Activityが非表示になる際に優先的にNFCを受け取る設定を解除
+            mNfcAdapter?.disableForegroundDispatch(this@MainActivity)
+        }
+    }
+
+    override fun onNewIntent(intent: Intent?) {
+        super.onNewIntent(intent)
+        val action: String? = intent?.action
+        if (NfcAdapter.ACTION_NDEF_DISCOVERED.equals(action)
+            || NfcAdapter.ACTION_TAG_DISCOVERED.equals(action)
+            || NfcAdapter.ACTION_TECH_DISCOVERED.equals(action)) {
+            // IDmを取得
+            val idm: ByteArray? = intent?.getByteArrayExtra(NfcAdapter.EXTRA_ID)
+            // IDmを文字列に変換して表示
+            read.text = idm?.toString()
         }
     }
 }
