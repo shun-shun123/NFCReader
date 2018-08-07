@@ -1,10 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <manifest xmlns:android="http://schemas.android.com/apk/res/android"
     package="suika.jp.nfcreader">
-    <!--NFCタグを用いるためのpermission記述-->
-    <uses-permission android:name="android.permission.NFC"/>
-    <!--PlayストアでNFC搭載デバイスのみに表示する-->
-    <uses-feature android:name="android.hardware.nfc"/>
     <application
         android:allowBackup="true"
         android:icon="@mipmap/ic_launcher"
@@ -40,5 +36,9 @@
                 android:resource="@xml/nfc_tech_filter"/>
         </activity>
     </application>
+    <!--NFCタグを用いるためのpermission記述-->
+    <uses-permission android:name="android.permission.NFC"/>
+    <!--PlayストアでNFC搭載デバイスのみに表示する-->
+    <uses-feature android:name="android.hardware.nfc"/>
 
 </manifest>
