@@ -92,7 +92,7 @@ class MainActivity : AppCompatActivity() {
     private fun toHex(id: ByteArray): String {
         val sbuf: StringBuilder = StringBuilder()
         for (i in 0..id.size) {
-            var hex: String = "0" + Integer.toString(id[i].toInt() + 0x0ff, 16);
+            var hex: String = "0" + Integer.toString(id[i].toInt(), 16);
             if (hex.length > 2)
                 hex = hex.substring(1, 3);
             sbuf.append(" " + i + ":" + hex);
