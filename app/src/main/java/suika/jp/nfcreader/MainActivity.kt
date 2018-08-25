@@ -56,7 +56,7 @@ class MainActivity : AppCompatActivity() {
             // 以下ブログ参照
             val req: ByteArray = readWithoutEncryption(idm, 10)
             Log.d("REQ", toHex(req))
-            Log.d("REQ", toHex(req))
+            Log.d("REQ", parse(req))
         }
     }
 
@@ -84,7 +84,7 @@ class MainActivity : AppCompatActivity() {
         val size: Int = res[12].toInt()
         var str: String = ""
         for (i in 0..size) {
-            val rireki: Rireki = Rireki.parse(res, 13 + i * 16)
+            val rireki: Rireki = Rireki.parse(res, 13 + 0 * 16)
             str += rireki.toString() + "\n"
         }
         return str
