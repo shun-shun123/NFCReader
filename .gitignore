@@ -6,3 +6,4 @@
 /captures
 .externalNativeBuild
 .idea/*r
+.idea/workspace.xml
