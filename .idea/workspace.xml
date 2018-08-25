@@ -11,7 +11,6 @@
   </component>
   <component name="ChangeListManager">
     <list default="true" id="f1f2eef6-1bec-4371-84d6-d8167fd8476a" name="Default" comment="">
-      <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" afterPath="$PROJECT_DIR$/.idea/workspace.xml" />
       <change beforePath="$PROJECT_DIR$/app/src/main/java/suika/jp/nfcreader/MainActivity.kt" afterPath="$PROJECT_DIR$/app/src/main/java/suika/jp/nfcreader/MainActivity.kt" />
     </list>
     <option name="EXCLUDED_CONVERTED_TO_IGNORED" value="true" />
@@ -54,8 +53,8 @@
       <file leaf-file-name="MainActivity.kt" pinned="false" current-in-tab="true">
         <entry file="file://$PROJECT_DIR$/app/src/main/java/suika/jp/nfcreader/MainActivity.kt">
           <provider selected="true" editor-type-id="text-editor">
-            <state relative-caret-position="265">
-              <caret line="94" column="66" lean-forward="false" selection-start-line="94" selection-start-column="66" selection-end-line="94" selection-end-column="66" />
+            <state relative-caret-position="187">
+              <caret line="58" column="34" lean-forward="true" selection-start-line="58" selection-start-column="34" selection-end-line="58" selection-end-column="34" />
               <folding>
                 <element signature="e#28#390#0" expanded="true" />
               </folding>
@@ -2332,7 +2331,7 @@
     <property name="settings.editor.selected.configurable" value="preferences.language.Kotlin" />
     <property name="android.project.structure.last.selected" value="SDK Location" />
     <property name="android.project.structure.proportion" value="0.15" />
-    <property name="device.picker.selection" value="52e1421a" />
+    <property name="device.picker.selection" value="Nexus_5_API_27" />
   </component>
   <component name="RunDashboard">
     <option name="ruleStates">
@@ -2741,8 +2740,8 @@
     </entry>
     <entry file="file://$PROJECT_DIR$/app/src/main/java/suika/jp/nfcreader/MainActivity.kt">
       <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="265">
-          <caret line="94" column="66" lean-forward="false" selection-start-line="94" selection-start-column="66" selection-end-line="94" selection-end-column="66" />
+        <state relative-caret-position="187">
+          <caret line="58" column="34" lean-forward="true" selection-start-line="58" selection-start-column="34" selection-end-line="58" selection-end-column="34" />
           <folding>
             <element signature="e#28#390#0" expanded="true" />
           </folding>

@@ -56,6 +56,7 @@ class MainActivity : AppCompatActivity() {
             // 以下ブログ参照
             val req: ByteArray = readWithoutEncryption(idm, 10)
             Log.d("REQ", toHex(req))
+            read.text = parse(req)
         }
     }
 
