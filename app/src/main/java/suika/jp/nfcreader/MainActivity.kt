@@ -12,7 +12,6 @@ import kotlinx.android.synthetic.main.activity_main.*
 import suika.jp.nfcreader.Utils.NfcChecker
 import suika.jp.nfcreader.Utils.Rireki
 import java.io.ByteArrayOutputStream
-import android.R.attr.tag
 import java.util.*
 
 
@@ -72,12 +71,9 @@ class MainActivity : AppCompatActivity() {
             // 以下ブログ参照
             val req: ByteArray = readWithoutEncryption(idm, pollingRes[0].toInt())
             Log.d("REQ", toHex(req))
-<<<<<<< HEAD
             read.text = parse(req)
             Log.d("REQ", read.text.toString())
-=======
             Log.d("REQ", parse(req))
->>>>>>> 3c8e2fa8972e758e0084bdbeb15c885a82bd39c8
         }
     }
 
@@ -98,7 +94,6 @@ class MainActivity : AppCompatActivity() {
 
     private fun readWithoutEncryption(idm: ByteArray?, size: Int): ByteArray {
         val bout: ByteArrayOutputStream = ByteArrayOutputStream(100)
-<<<<<<< HEAD
         bout.write(0)   // データ長のダミー
         bout.write(0x6) // Felicaコマンド, [Read Without Encryption]
         bout.write(idm)    // カードID 8byte
@@ -106,7 +101,6 @@ class MainActivity : AppCompatActivity() {
         bout.write(0x0f)//
         bout.write(0x09)
         bout.write(size)   // ブロック数
-=======
         bout.write(0)
         bout.write(0x6) // Felicaコマンド, [Read Without Encryption] req[1]
         bout.write(idm)    // カードID 8byte req[2]～req[9]
@@ -114,7 +108,6 @@ class MainActivity : AppCompatActivity() {
         bout.write(0x0f) // 履歴のサービスコード下位バイト req[11]
         bout.write(0x09) // 履歴のサービスコード上位バイト req[12]
         bout.write(size)    //ブロック数 req[13]
->>>>>>> 3c8e2fa8972e758e0084bdbeb15c885a82bd39c8
         for (i in 0..size) {
             bout.write(0x80)
             bout.write(i)
