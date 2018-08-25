@@ -5,6 +5,7 @@ import android.content.Intent
 import android.nfc.NfcAdapter
 import android.os.Bundle
 import android.support.v7.app.AppCompatActivity
+import android.util.Log
 import kotlinx.android.synthetic.main.activity_main.*
 import suika.jp.nfcreader.Utils.NfcChecker
 import suika.jp.nfcreader.Utils.Rireki
@@ -54,8 +55,9 @@ class MainActivity : AppCompatActivity() {
             read.text = idm?.toString()
             // 以下ブログ参照
             val req: ByteArray = readWithoutEncryption(idm, 10)
-//            Log.d("REQ", toHex(req))
+            Log.d("REQ", toHex(req))
             read.text = parse(req)
+            Log.d("REQ", read.text.toString())
         }
     }
 
@@ -83,20 +85,23 @@ class MainActivity : AppCompatActivity() {
         val size: Int = res[12].toInt()
         var str: String = ""
         for (i in 0..size) {
-            val rireki: Rireki = Rireki.parse(res, 13 + i * 16)
+            val rireki: Rireki = Rireki.parse(res, 13 + 0 * 16)
             str += rireki.toString() + "\n"
         }
         return str
     }
 
-//    private fun toHex(id: ByteArray): String {
-//        val sbuf: StringBuilder = StringBuilder()
-//        for (i in 0..id.size - 1) {
-//            var hex: String = "0" + Integer.toString(, 16);
-//            if (hex.length > 2)
-//                hex = hex.substring(1, 3);
-//            sbuf.append(" " + i + ":" + hex);
-//        }
-//        return sbuf.toString()
-//    }
+    private fun toHex(id: ByteArray): String {
+        val sbuf: StringBuilder = StringBuilder()
+        for (i in 0..id.size - 1) {
+            var hex: String = "0" + Integer.toString(id[i].toInt() and 0x0ff, 16);
+            if (hex.length > 2)
+                hex = hex.substring(1, 3);
+            sbuf.append(" " + i + ":" + hex);
+        }
+        return sbuf.toString()
+    }
+    /*
+    0: 
+     */
 }
