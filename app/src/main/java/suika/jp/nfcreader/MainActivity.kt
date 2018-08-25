@@ -3,6 +3,8 @@ package suika.jp.nfcreader
 import android.app.PendingIntent
 import android.content.Intent
 import android.nfc.NfcAdapter
+import android.nfc.Tag
+import android.nfc.tech.NfcF
 import android.os.Bundle
 import android.support.v7.app.AppCompatActivity
 import android.util.Log
@@ -10,6 +12,9 @@ import kotlinx.android.synthetic.main.activity_main.*
 import suika.jp.nfcreader.Utils.NfcChecker
 import suika.jp.nfcreader.Utils.Rireki
 import java.io.ByteArrayOutputStream
+import android.R.attr.tag
+import java.util.*
+
 
 class MainActivity : AppCompatActivity() {
 
@@ -49,20 +54,51 @@ class MainActivity : AppCompatActivity() {
         if (NfcAdapter.ACTION_NDEF_DISCOVERED.equals(action)
             || NfcAdapter.ACTION_TAG_DISCOVERED.equals(action)
             || NfcAdapter.ACTION_TECH_DISCOVERED.equals(action)) {
-            // IDmを取得
-            val idm: ByteArray? = intent?.getByteArrayExtra(NfcAdapter.EXTRA_ID)
+
+            val targetSystemCode = byteArrayOf(0x00.toByte(), 0x03.toByte())
+            val tag = intent?.getParcelableExtra<Tag>(NfcAdapter.EXTRA_TAG) ?: return
+            val nfc = NfcF.get(tag)
+            nfc.connect()
+            // polling コマンドを作成
+            val polling = polling(targetSystemCode)
+            // コマンドを送信して結果を取得
+            val pollingRes = nfc.transceive(polling)
+            // System 0 のIDｍを取得(1バイト目はデータサイズ、2バイト目はレスポンスコード、IDmのサイズは8バイト)
+            val idm = Arrays.copyOfRange(pollingRes, 2, 10)
+//            // 対象のサービスコード -> 0x1A8B
+//            val targetServiceCode = byteArrayOf(0x1A.toByte(), 0x8B.toByte())
             // IDmを文字列に変換して表示
             read.text = idm?.toString()
             // 以下ブログ参照
-            val req: ByteArray = readWithoutEncryption(idm, 10)
+            val req: ByteArray = readWithoutEncryption(idm, pollingRes[0].toInt())
             Log.d("REQ", toHex(req))
+<<<<<<< HEAD
             read.text = parse(req)
             Log.d("REQ", read.text.toString())
+=======
+            Log.d("REQ", parse(req))
+>>>>>>> 3c8e2fa8972e758e0084bdbeb15c885a82bd39c8
         }
+    }
+
+    private fun polling(systemCode: ByteArray): ByteArray {
+        val bout = ByteArrayOutputStream(100)
+
+        bout.write(0x00)           // データ長バイトのダミー
+        bout.write(0x00)           // コマンドコード
+        bout.write(systemCode[0].toInt())  // systemCode
+        bout.write(systemCode[1].toInt())  // systemCode
+        bout.write(0x01)           // リクエストコード
+        bout.write(0x0f)           // タイムスロット
+
+        val msg = bout.toByteArray()
+        msg[0] = msg.size.toByte() // 先頭１バイトはデータ長
+        return msg
     }
 
     private fun readWithoutEncryption(idm: ByteArray?, size: Int): ByteArray {
         val bout: ByteArrayOutputStream = ByteArrayOutputStream(100)
+<<<<<<< HEAD
         bout.write(0)   // データ長のダミー
         bout.write(0x6) // Felicaコマンド, [Read Without Encryption]
         bout.write(idm)    // カードID 8byte
@@ -70,16 +106,26 @@ class MainActivity : AppCompatActivity() {
         bout.write(0x0f)//
         bout.write(0x09)
         bout.write(size)   // ブロック数
+=======
+        bout.write(0)
+        bout.write(0x6) // Felicaコマンド, [Read Without Encryption] req[1]
+        bout.write(idm)    // カードID 8byte req[2]～req[9]
+        bout.write(1)   // サービスコードリストの長さ req[10]
+        bout.write(0x0f) // 履歴のサービスコード下位バイト req[11]
+        bout.write(0x09) // 履歴のサービスコード上位バイト req[12]
+        bout.write(size)    //ブロック数 req[13]
+>>>>>>> 3c8e2fa8972e758e0084bdbeb15c885a82bd39c8
         for (i in 0..size) {
             bout.write(0x80)
             bout.write(i)
         }
         var msg: ByteArray = bout.toByteArray()
         msg[0] = msg.size.toByte()
-        return msg
+        return msg //req[0]
     }
     private fun parse(res: ByteArray): String {
         if (res[10] != 0x00.toByte()) {
+            return "ERROR"
             // Error処理
         }
         val size: Int = res[12].toInt()
