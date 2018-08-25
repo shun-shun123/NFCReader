@@ -5,7 +5,6 @@ import android.content.Intent
 import android.nfc.NfcAdapter
 import android.os.Bundle
 import android.support.v7.app.AppCompatActivity
-import android.util.Log
 import kotlinx.android.synthetic.main.activity_main.*
 import suika.jp.nfcreader.Utils.NfcChecker
 import suika.jp.nfcreader.Utils.Rireki
@@ -55,20 +54,20 @@ class MainActivity : AppCompatActivity() {
             read.text = idm?.toString()
             // 以下ブログ参照
             val req: ByteArray = readWithoutEncryption(idm, 10)
-            Log.d("REQ", toHex(req))
+//            Log.d("REQ", toHex(req))
             read.text = parse(req)
         }
     }
 
     private fun readWithoutEncryption(idm: ByteArray?, size: Int): ByteArray {
         val bout: ByteArrayOutputStream = ByteArrayOutputStream(100)
-        bout.write(0)
+        bout.write(0)   // データ長のダミー
         bout.write(0x6) // Felicaコマンド, [Read Without Encryption]
         bout.write(idm)    // カードID 8byte
         bout.write(1)   // サービスコードリストの長さ
-        bout.write(0x0f)
+        bout.write(0x0f)//
         bout.write(0x09)
-        bout.write(size)
+        bout.write(size)   // ブロック数
         for (i in 0..size) {
             bout.write(0x80)
             bout.write(i)
@@ -90,14 +89,14 @@ class MainActivity : AppCompatActivity() {
         return str
     }
 
-    private fun toHex(id: ByteArray): String {
-        val sbuf: StringBuilder = StringBuilder()
-        for (i in 0..id.size - 1) {
-            var hex: String = "0" + Integer.toString(id[i].toInt(), 16);
-            if (hex.length > 2)
-                hex = hex.substring(1, 3);
-            sbuf.append(" " + i + ":" + hex);
-        }
-        return sbuf.toString()
-    }
+//    private fun toHex(id: ByteArray): String {
+//        val sbuf: StringBuilder = StringBuilder()
+//        for (i in 0..id.size - 1) {
+//            var hex: String = "0" + Integer.toString(, 16);
+//            if (hex.length > 2)
+//                hex = hex.substring(1, 3);
+//            sbuf.append(" " + i + ":" + hex);
+//        }
+//        return sbuf.toString()
+//    }
 }
