@@ -70,7 +70,7 @@ class MainActivity : AppCompatActivity() {
             // IDmを文字列に変換して表示
             read.text = idm?.toString()
             // 以下ブログ参照
-            val req: ByteArray = readWithoutEncryption(idm, 4)
+            val req: ByteArray = readWithoutEncryption(idm, pollingRes[0].toInt())
             Log.d("REQ", toHex(req))
             Log.d("REQ", parse(req))
         }
@@ -110,6 +110,7 @@ class MainActivity : AppCompatActivity() {
     }
     private fun parse(res: ByteArray): String {
         if (res[10] != 0x00.toByte()) {
+            return "ERROR"
             // Error処理
         }
         val size: Int = res[12].toInt()
@@ -124,7 +125,7 @@ class MainActivity : AppCompatActivity() {
     private fun toHex(id: ByteArray): String {
         val sbuf: StringBuilder = StringBuilder()
         for (i in 0..id.size - 1) {
-            var hex: String = "0" + Integer.toString(id[i].toInt() + 0x0ff, 16);
+            var hex: String = "0" + Integer.toString(id[i].toInt() and 0x0ff, 16);
             if (hex.length > 2)
                 hex = hex.substring(1, 3);
             sbuf.append(" " + i + ":" + hex);
