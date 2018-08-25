@@ -53,7 +53,7 @@ class MainActivity : AppCompatActivity() {
         val action: String? = intent?.action
         if (NfcAdapter.ACTION_NDEF_DISCOVERED.equals(action)
             || NfcAdapter.ACTION_TAG_DISCOVERED.equals(action)
-            || NfcAdapter.ACTION_TECH_DISCOVERED.equals(action) || 1==1) {
+            || NfcAdapter.ACTION_TECH_DISCOVERED.equals(action)) {
 
             val targetSystemCode = byteArrayOf(0x00.toByte(), 0x03.toByte())
             val tag = intent?.getParcelableExtra<Tag>(NfcAdapter.EXTRA_TAG) ?: return
