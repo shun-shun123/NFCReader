@@ -60,21 +60,27 @@ class MainActivity : AppCompatActivity() {
             try {
                 nfc.connect()
                 // polling コマンドを作成
-                val polling = polling(targetSystemCode)
+                val pollingCommand = polling(targetSystemCode)
                 // コマンドを送信して結果を取得
-                val pollingRes = nfc.transceive(polling)
+                val pollingRes = nfc.transceive(pollingCommand  )
                 // System 0 のIDｍを取得(1バイト目はデータサイズ、2バイト目はレスポンスコード、IDmのサイズは8バイト)
-                val idm = Arrays.copyOfRange(pollingRes, 3, 10)
+                val idm = Arrays.copyOfRange(pollingRes, 2, 9)
 //            // 対象のサービスコード -> 0x1A8B
 //            val targetServiceCode = byteArrayOf(0x1A.toByte(), 0x8B.toByte())
                 // IDmを文字列に変換して表示
                 read.text = idm?.toString()
+//                for (i in 0..pollingRes.size - ) {
+//                    Log.d("c", pollingRes[i].toInt().toString())
+//                }
+                Log.d("pollingRes[0]", pollingRes[0].toInt().toString())
                 // 以下ブログ参照
-                val req: ByteArray = readWithoutEncryption(idm, pollingRes[0].toInt())
-//                Log.d("REQ", toHex(req))
+                val req: ByteArray = readWithoutEncryption(idm, pollingRes[0] - 1)
+                Log.d("REQ", toHex(req))
+                Log.d("REQ", nfc.transceive(req).toString())
+                Log.d("REQ2", "TEST")
                 Log.d("REQ", parse(req))
             } catch (e: Exception) {
-                Log.e("FeliCaSample", "cannot read nfc. '$e'")
+                Log.e("FeliCaSample", "あああああああああああああああああああああああああああああああああああああああああああああcannot read nfc. '$e'")
                 if (nfc.isConnected) {
                     nfc.close()
                 }
@@ -106,26 +112,42 @@ class MainActivity : AppCompatActivity() {
         bout.write(0x00) // 履歴のサービスコード下位バイト req[11]
         bout.write(0x8B) // 履歴のサービスコード上位バイト req[12]
         bout.write(size)    //ブロック数 req[13]
+
         for (i in 0..size) {
-            bout.write(0x80)
-            bout.write(i)
+            if(i % 2 == 0){
+                bout.write(i-1)
+            }else{
+                bout.write(0x02)
+            }
+//            bout.write(0x80)
+//            bout.write(i)
         }
-        var msg: ByteArray = bout.toByteArray()
+        val msg: ByteArray = bout.toByteArray()
         msg[0] = msg.size.toByte()
         return msg //req[0]
     }
+
     private fun parse(res: ByteArray): String {
+//        for (i in 0..res.size - 2){
+//            Log.d("res['$i']", res[i].toInt().toString())
+//        }
         if (res[10] != 0x00.toByte()) {
-            return "ERROR"
+            return "ああああああああああああああああああああああああああああああああああああERROR"
             // Error処理
         }
-        val size: Int = res[13].toInt()
+        val size: Int = res[12].toInt() - 1
         var str: String = ""
-        for (i in 0..size) {
-            val rireki: Rireki = Rireki.parse(res, 14 + i * 16)
+        Log.d("resNum", res.size.toString())
+        Log.d("size", size.toString())
+//        for (i in 0..size) {
+//        for(i in 0.. pollingRes[0] - 2)
+        for (i in 0..size - 2) {
+            val rireki: Rireki = Rireki.parse(res, 13 + i * 16)
             str += rireki.toString() + "\n"
         }
+        Log.d("c", str)
         return str
+
     }
 
     private fun toHex(id: ByteArray): String {
