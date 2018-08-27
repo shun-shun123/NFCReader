@@ -85,7 +85,8 @@ class MainActivity : AppCompatActivity() {
                 // Read Without Encryption(サービスコード: 0x090f 乗降履歴情報)
                 var targetServiceCode = byteArrayOf(0x09, 0x0f)
                 read.text = IDm.toString()
-                var reqCommand: ByteArray = readWithoutEncryption(IDm, 1)
+                // ICOCAの同時読み出し可能なブロック数の最大値は多分12
+                var reqCommand: ByteArray = readWithoutEncryption(IDm, 12)
                 Log.d(DEBUG_TAG, "----------read Without Encryption(targetServiceCode${toHex(targetServiceCode)})----------")
                 var readRes = nfc.transceive(reqCommand)
                 Log.d(DEBUG_TAG, "Read Without Encryption Result(serviceCode${toHex(targetServiceCode)}): " + toHex(readRes))
@@ -143,12 +144,10 @@ class MainActivity : AppCompatActivity() {
         bout.write(serviceCode[1].toInt()) // 履歴のサービスコード下位バイト req[11]（サービスコードはリトルエディアン）
         bout.write(serviceCode[0].toInt()) // 履歴のサービスコード上位バイト req[12]
         bout.write(size)    //ブロック数 req[13]
-        bout.write(0x80)
-        bout.write(0)
-//        for (i in 0..size - 1) {
-//            bout.write(0x80)
-//            bout.write(i)
-//        }
+        for (i in 0..size-1) {
+            bout.write(0x80)
+            bout.write(i)
+        }
         val commandPacket: ByteArray = bout.toByteArray()
         commandPacket[0] = commandPacket.size.toByte()
         Log.d(DEBUG_TAG, "read Without Encryption Command: " + toHex(commandPacket))
