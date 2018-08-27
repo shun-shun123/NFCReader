@@ -180,26 +180,6 @@ class MainActivity : AppCompatActivity() {
         return str
     }
 
-    /*
-    サービスコード: 0x008b(1ブロック)
-    カード種別およびカード残額情報
-     */
-    private fun cardInfoParse(res: ByteArray): String {
-        if (res[10] != 0x00.toByte()) {
-            return "ERROR"
-        }
-        val blockData = res.copyOfRange(13, 29)
-        Log.d(DEBUG_TAG, "blockData: ${toHex(blockData)}")
-        val cardName: String = when (blockData[8] and 0xf0.toByte()) {
-            0x00.toByte() -> "EX-IC"
-            0x02.toByte() -> "Suica"
-            0x03.toByte() -> "ICOCA"
-            else -> "Not in List"
-        }
-        Log.d(DEBUG_TAG, "cardName: $cardName")
-        return cardName
-    }
-
     private fun toHex(id: ByteArray): String {
         val sbuf: StringBuilder = StringBuilder()
         for (i in 0.rangeTo(id.size - 1)) {
