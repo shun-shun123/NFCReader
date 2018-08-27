@@ -3,15 +3,15 @@ package suika.jp.nfcreader.Utils;
 import android.util.SparseArray;
 
 public class Rireki {
-    public int termId;
-    public int procId;
-    public int year;
-    public int month;
-    public int day;
-    public String kind;
-    public int remain;
-    public int seqNo;
-    public int reasion;
+    private int termId;
+    private int procId;
+    private int year;
+    private int month;
+    private int day;
+    private String kind;
+    private int remain;
+    private int seqNo;
+    private int reasion;
 
     public Rireki(){
     }
@@ -32,9 +32,41 @@ public class Rireki {
         this.day   = mixInt & 0x01f;
 
         if (isBuppan(this.procId)) {
-            this.kind = "物販";
+            switch(this.procId) {
+                case 70:
+                    this.kind = "物販";
+                    break;
+                case 73:
+                    this.kind = "レジ入金";
+                    break;
+                case 74:
+                    this.kind = "物販取消";
+                    break;
+                case 75:
+                    this.kind = "入場物販";
+                    break;
+                case 198:
+                    this.kind = "現金併用物販";
+                    break;
+                case 203:
+                    this.kind = "入場現金併用物販";
+                    break;
+            }
         } else if (isBus(this.procId)) {
-            this.kind = "バス";
+            switch (this.procId) {
+                case 13:
+                    this.kind = "バス";
+                    break;
+                case 15:
+                    this.kind = "バス";
+                    break;
+                case 31:
+                    this.kind = "バスチャージ入金";
+                    break;
+                case 35:
+                    this.kind = "バス路面電車企画券購入";
+                    break;
+            }
         } else {
             this.kind = res[off+6] < 0x80 ? "JR" : "公営/私鉄" ;
         }

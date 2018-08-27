@@ -12,7 +12,6 @@ import kotlinx.android.synthetic.main.activity_main.*
 import suika.jp.nfcreader.Utils.NfcChecker
 import suika.jp.nfcreader.Utils.Rireki
 import java.io.ByteArrayOutputStream
-import kotlin.experimental.and
 
 
 class MainActivity : AppCompatActivity() {
@@ -91,14 +90,6 @@ class MainActivity : AppCompatActivity() {
                 var readRes = nfc.transceive(reqCommand)
                 Log.d(DEBUG_TAG, "Read Without Encryption Result(serviceCode${toHex(targetServiceCode)}): " + toHex(readRes))
                 var parsedReadRes = parse(readRes)
-
-                // Read Without Encryption(サービスコード: 0x008b カード種別およびカード残額情報)
-                targetServiceCode = byteArrayOf(0x00, 0x8b.toByte())
-                reqCommand = readWithoutEncryption(IDm, 1)
-                Log.d(DEBUG_TAG, "----------read Without Encryption(serviceCode${targetServiceCode})----------")
-                readRes = nfc.transceive(reqCommand)
-                Log.d(DEBUG_TAG, "Read Without Encryption Result(serviceCode${toHex(targetServiceCode)})" + toHex(readRes))
-                parsedReadRes = cardInfoParse(readRes)
             } catch (e: Exception) {
                 Log.d(DEBUG_TAG, "Exception: " + e.toString() + "  [cannnot read NFC]")
                 if (nfc.isConnected) {
@@ -170,10 +161,11 @@ class MainActivity : AppCompatActivity() {
         }
         val IDm = res.copyOfRange(2, 10)
         Log.d(DEBUG_TAG, "parse IDm: " + toHex(IDm))
-        val size: Int = res[12].toInt()
+        val blockNum: Int = res[12].toInt()
+        val blockData = res.copyOfRange(13, 13 + 16 * blockNum)
         var str: String = ""
-        for (i in 0..size - 1) {
-            val rireki: Rireki = Rireki.parse(res, 13 + i * 16)
+        for (i in 0..blockNum - 1) {
+            val rireki: Rireki = Rireki.parse(blockData, i * 16)
             str += rireki.toString() + "\n"
         }
         Log.d(DEBUG_TAG, "parseResult: $str")
