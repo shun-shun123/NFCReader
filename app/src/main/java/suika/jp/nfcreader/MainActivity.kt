@@ -66,7 +66,7 @@ class MainActivity : AppCompatActivity() {
                 Log.d(DATA, "----------polling----------")
                 val pollingRes = nfc.transceive(pollingCommand)
                 // System 0 のIDｍを取得(1バイト目はデータサイズ(20)、2バイト目はレスポンスコード(0x01)、IDmのサイズは8バイト)
-                val IDm = pollingRes.copyOfRange(2, 9)
+                val IDm = pollingRes.copyOfRange(2, 10)
                 Log.d(DATA, "pollingRes: " + toHex(pollingRes))
                 Log.d(DATA, "IDm: " + toHex(IDm))
 
@@ -89,7 +89,7 @@ class MainActivity : AppCompatActivity() {
                 Log.d(DATA, "----------readWithoutEncryption----------")
                 val readRes = nfc.transceive(reqCommand)
                 Log.d(DATA, "ReadWithoutEncryptionResponse: " + toHex(readRes))
-//                Log.d(DATA, "parse(req): " + parse(reqCommand))
+                val parsedReadRes = parse(readRes)
             } catch (e: Exception) {
                 Log.d(DATA, "Exception: " + e.toString() + "  [cannnot read NFC]")
                 if (nfc.isConnected) {
@@ -131,8 +131,11 @@ class MainActivity : AppCompatActivity() {
 
     private fun readWithoutEncryption(IDm: ByteArray?, size: Int): ByteArray {
         val bout: ByteArrayOutputStream = ByteArrayOutputStream()
-        // サービスコード0x090fが交通系のサービスコード
-        val serviceCode: ByteArray = byteArrayOf(0x00.toByte(), 0x8b.toByte())
+        /*
+        0x090fが入出場記録のサービスコード
+        0x008bが残高とかに関するサービスコード
+         */
+        val serviceCode: ByteArray = byteArrayOf(0x09.toByte(), 0x0f.toByte())
         bout.write(0)
         bout.write(0x6) // Felicaコマンド, [Read Without Encryption] req[1]
         bout.write(IDm)    // カードID 8byte req[2]～req[9]
@@ -140,11 +143,12 @@ class MainActivity : AppCompatActivity() {
         bout.write(serviceCode[1].toInt()) // 履歴のサービスコード下位バイト req[11]（サービスコードはリトルエディアン）
         bout.write(serviceCode[0].toInt()) // 履歴のサービスコード上位バイト req[12]
         bout.write(size)    //ブロック数 req[13]
-
-        for (i in 0..size) {
-            bout.write(0x80)
-            bout.write(i)
-        }
+        bout.write(0x80)
+        bout.write(0)
+//        for (i in 0..size - 1) {
+//            bout.write(0x80)
+//            bout.write(i)
+//        }
         val commandPacket: ByteArray = bout.toByteArray()
         commandPacket[0] = commandPacket.size.toByte()
         Log.d(DATA, "readWithoutEncryptionCommand: " + toHex(commandPacket))
@@ -155,15 +159,17 @@ class MainActivity : AppCompatActivity() {
         if (res[10] != 0x00.toByte()) { // res[10] エラーコード. 0x00が正常
             return "ERROR"
         }
-        val size: Int = res[12].toInt() - 1
+        val IDm = res.copyOfRange(2, 10)
+        Log.d(DATA, "parse IDm: " + toHex(IDm))
+        val size: Int = res[12].toInt()
         var str: String = ""
         Log.d("resNum", res.size.toString())
         Log.d("size", size.toString())
-        for (i in 0..size - 2) {
+        for (i in 0..size - 1) {
             val rireki: Rireki = Rireki.parse(res, 13 + i * 16)
             str += rireki.toString() + "\n"
         }
-        Log.d("c", str)
+        Log.d(DATA, "parseResult: $str")
         return str
     }
 
