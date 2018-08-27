@@ -12,13 +12,14 @@ import kotlinx.android.synthetic.main.activity_main.*
 import suika.jp.nfcreader.Utils.NfcChecker
 import suika.jp.nfcreader.Utils.Rireki
 import java.io.ByteArrayOutputStream
+import kotlin.experimental.and
 
 
 class MainActivity : AppCompatActivity() {
 
     private var mNfcAdapter: NfcAdapter? = null
     private val NfcChecker: NfcChecker = NfcChecker()
-    private val DATA: String = "FeliCaData"
+    private val DEBUG_TAG: String = "FeliCa"
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -63,35 +64,43 @@ class MainActivity : AppCompatActivity() {
                 // targetSystemCode: 0x0003は交通系ICカードのシステムコード
                 val targetSystemCode = byteArrayOf(0x00, 0x03)
                 val pollingCommand = polling(targetSystemCode)
-                Log.d(DATA, "----------polling----------")
+                Log.d(DEBUG_TAG, "----------polling----------")
                 val pollingRes = nfc.transceive(pollingCommand)
                 // System 0 のIDｍを取得(1バイト目はデータサイズ(20)、2バイト目はレスポンスコード(0x01)、IDmのサイズは8バイト)
                 val IDm = pollingRes.copyOfRange(2, 10)
-                Log.d(DATA, "pollingRes: " + toHex(pollingRes))
-                Log.d(DATA, "IDm: " + toHex(IDm))
+                Log.d(DEBUG_TAG, "polling Result: " + toHex(pollingRes))
+                Log.d(DEBUG_TAG, "IDm: " + toHex(IDm))
 
                 // RequestResponseでカードの状態を確認
                 val requestResponseCommand = requestResopnse(IDm)
-                Log.d(DATA, "----------RequestResponse----------")
+                Log.d(DEBUG_TAG, "----------Request Response----------")
                 val requestResponse = nfc.transceive(requestResponseCommand)
-                Log.d(DATA, "RequestResponse: " + toHex(requestResponse))
+                Log.d(DEBUG_TAG, "Request Response Result: " + toHex(requestResponse))
 
                 // RequestServiceでエリアやサービスの存在を確認
                 val requestServiceCommand = requestService(IDm)
-                Log.d(DATA, "----------RequestService----------")
+                Log.d(DEBUG_TAG, "----------Request Service----------")
                 val requestService = nfc.transceive(requestServiceCommand)
-                Log.d(DATA, "RequestService: " + toHex(requestService))
+                Log.d(DEBUG_TAG, "Request Service Result: " + toHex(requestService))
 
-                // Read Without Encryption
-                val targetServiceCode = byteArrayOf(0x09, 0x0f)
+                // Read Without Encryption(サービスコード: 0x090f 乗降履歴情報)
+                var targetServiceCode = byteArrayOf(0x09, 0x0f)
                 read.text = IDm.toString()
-                val reqCommand: ByteArray = readWithoutEncryption(IDm, 1)
-                Log.d(DATA, "----------readWithoutEncryption----------")
-                val readRes = nfc.transceive(reqCommand)
-                Log.d(DATA, "ReadWithoutEncryptionResponse: " + toHex(readRes))
-                val parsedReadRes = parse(readRes)
+                var reqCommand: ByteArray = readWithoutEncryption(IDm, 1)
+                Log.d(DEBUG_TAG, "----------read Without Encryption(targetServiceCode${toHex(targetServiceCode)})----------")
+                var readRes = nfc.transceive(reqCommand)
+                Log.d(DEBUG_TAG, "Read Without Encryption Result(serviceCode${toHex(targetServiceCode)}): " + toHex(readRes))
+                var parsedReadRes = parse(readRes)
+
+                // Read Without Encryption(サービスコード: 0x008b カード種別およびカード残額情報)
+                targetServiceCode = byteArrayOf(0x00, 0x8b.toByte())
+                reqCommand = readWithoutEncryption(IDm, 1)
+                Log.d(DEBUG_TAG, "----------read Without Encryption(serviceCode${targetServiceCode})----------")
+                readRes = nfc.transceive(reqCommand)
+                Log.d(DEBUG_TAG, "Read Without Encryption Result(serviceCode${toHex(targetServiceCode)})" + toHex(readRes))
+                parsedReadRes = cardInfoParse(readRes)
             } catch (e: Exception) {
-                Log.d(DATA, "Exception: " + e.toString() + "  [cannnot read NFC]")
+                Log.d(DEBUG_TAG, "Exception: " + e.toString() + "  [cannnot read NFC]")
                 if (nfc.isConnected) {
                     nfc.close()
                 }
@@ -125,7 +134,7 @@ class MainActivity : AppCompatActivity() {
 
         val commandPacket = bout.toByteArray()
         commandPacket[0] = commandPacket.size.toByte()
-        Log.d(DATA, "pollingCommand: " + toHex(commandPacket))
+        Log.d(DEBUG_TAG, "polling Command: " + toHex(commandPacket))
         return commandPacket
     }
 
@@ -151,7 +160,7 @@ class MainActivity : AppCompatActivity() {
 //        }
         val commandPacket: ByteArray = bout.toByteArray()
         commandPacket[0] = commandPacket.size.toByte()
-        Log.d(DATA, "readWithoutEncryptionCommand: " + toHex(commandPacket))
+        Log.d(DEBUG_TAG, "read Without Encryption Command: " + toHex(commandPacket))
         return commandPacket //req[0]
     }
 
@@ -160,17 +169,35 @@ class MainActivity : AppCompatActivity() {
             return "ERROR"
         }
         val IDm = res.copyOfRange(2, 10)
-        Log.d(DATA, "parse IDm: " + toHex(IDm))
+        Log.d(DEBUG_TAG, "parse IDm: " + toHex(IDm))
         val size: Int = res[12].toInt()
         var str: String = ""
-        Log.d("resNum", res.size.toString())
-        Log.d("size", size.toString())
         for (i in 0..size - 1) {
             val rireki: Rireki = Rireki.parse(res, 13 + i * 16)
             str += rireki.toString() + "\n"
         }
-        Log.d(DATA, "parseResult: $str")
+        Log.d(DEBUG_TAG, "parseResult: $str")
         return str
+    }
+
+    /*
+    サービスコード: 0x008b(1ブロック)
+    カード種別およびカード残額情報
+     */
+    private fun cardInfoParse(res: ByteArray): String {
+        if (res[10] != 0x00.toByte()) {
+            return "ERROR"
+        }
+        val blockData = res.copyOfRange(13, 29)
+        Log.d(DEBUG_TAG, "blockData: ${toHex(blockData)}")
+        val cardName: String = when (blockData[8] and 0xf0.toByte()) {
+            0x00.toByte() -> "EX-IC"
+            0x02.toByte() -> "Suica"
+            0x03.toByte() -> "ICOCA"
+            else -> "Not in List"
+        }
+        Log.d(DEBUG_TAG, "cardName: $cardName")
+        return cardName
     }
 
     private fun toHex(id: ByteArray): String {
@@ -195,7 +222,7 @@ class MainActivity : AppCompatActivity() {
         bout.write(IDm)        // IDm
         val commandPacket = bout.toByteArray()
         commandPacket[0] = commandPacket.size.toByte()
-        Log.d(DATA, "requestResponseCommand: " + toHex(commandPacket))
+        Log.d(DEBUG_TAG, "request Response Command: " + toHex(commandPacket))
         return commandPacket
     }
 
@@ -215,7 +242,7 @@ class MainActivity : AppCompatActivity() {
         bout.write(serviceCode[0].toInt())
         val commandPacket = bout.toByteArray()
         commandPacket[0] = commandPacket.size.toByte()
-        Log.d(DATA, "requestServiceCommand: " + toHex(commandPacket))
+        Log.d(DEBUG_TAG, "request ServicefCommand: " + toHex(commandPacket))
         return commandPacket
     }
 }
