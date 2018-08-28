@@ -38,6 +38,7 @@
     </application>
     <!--NFCタグを用いるためのpermission記述-->
     <uses-permission android:name="android.permission.NFC"/>
+    <uses-permission android:name="android.permission.INTERNET" />
     <!--PlayストアでNFC搭載デバイスのみに表示する-->
     <uses-feature android:name="android.hardware.nfc"/>
 

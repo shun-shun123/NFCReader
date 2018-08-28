@@ -8,7 +8,10 @@ import android.nfc.tech.NfcF
 import android.os.Bundle
 import android.support.v7.app.AppCompatActivity
 import android.util.Log
+import io.reactivex.android.schedulers.AndroidSchedulers
+import io.reactivex.schedulers.Schedulers
 import kotlinx.android.synthetic.main.activity_main.*
+import suika.jp.nfcreader.HttpMethod.Post.*
 import suika.jp.nfcreader.Utils.NfcChecker
 import suika.jp.nfcreader.Utils.Rireki
 import java.io.ByteArrayOutputStream
@@ -83,12 +86,12 @@ class MainActivity : AppCompatActivity() {
                 Log.d(DEBUG_TAG, "Request Service Result: " + toHex(requestService))
 
                 // Read Without Encryption(サービスコード: 0x090f 乗降履歴情報)
-                var targetServiceCode = byteArrayOf(0x09, 0x0f)
+                val targetServiceCode = byteArrayOf(0x09, 0x0f)
                 read.text = IDm.toString()
                 // ICOCAの同時読み出し可能なブロック数の最大値は多分12
-                var reqCommand: ByteArray = readWithoutEncryption(IDm, 12)
+                val reqCommand: ByteArray = readWithoutEncryption(IDm, 12)
                 Log.d(DEBUG_TAG, "----------read Without Encryption(targetServiceCode${toHex(targetServiceCode)})----------")
-                var readRes = nfc.transceive(reqCommand)
+                val readRes = nfc.transceive(reqCommand)
                 Log.d(DEBUG_TAG, "Read Without Encryption Result(serviceCode${toHex(targetServiceCode)}): " + toHex(readRes))
                 var parsedReadRes = parse(readRes)
             } catch (e: Exception) {
@@ -97,6 +100,28 @@ class MainActivity : AppCompatActivity() {
                     nfc.close()
                 }
             }
+            val dataModel = PostResponse()
+            val dataModels = SuicaDataModel()
+            dataModel.tarminal = "a"
+            dataModel.balance = 0
+            dataModel.process = "1"
+            dataModel.entranceDistrict = "2"
+            dataModel.dateProcess = "3"
+            dataModel.entranceRoute = "4"
+            dataModel.entranceStation = "5"
+            dataModel.exitDistrict = "6"
+            dataModel.exitRoute = "7"
+            dataModel.exitStation = "8"
+            dataModels.results
+            val apiClient: SuicaApiService = HTTPClient()
+            apiClient.post()
+                    .observeOn(AndroidSchedulers.mainThread())
+                    .subscribeOn(Schedulers.io())
+                    .subscribe(
+                            { res -> Log.d(DEBUG_TAG, res.toString()) },
+                            { error -> Log.e(DEBUG_TAG, "{$error.message}") },
+                            { Log.d(DEBUG_TAG, "post completed") }
+                    )
         }
     }
 
