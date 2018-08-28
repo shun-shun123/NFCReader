@@ -144,7 +144,7 @@ class MainActivity : AppCompatActivity() {
         bout.write(serviceCode[1].toInt()) // 履歴のサービスコード下位バイト req[11]（サービスコードはリトルエディアン）
         bout.write(serviceCode[0].toInt()) // 履歴のサービスコード上位バイト req[12]
         bout.write(size)    //ブロック数 req[13]
-        for (i in 0..size-1) {
+        for (i in 0..size - 1) {
             bout.write(0x80)
             bout.write(i)
         }
@@ -158,11 +158,13 @@ class MainActivity : AppCompatActivity() {
         if (res[10] != 0x00.toByte()) { // res[10] エラーコード. 0x00が正常
             return "ERROR"
         }
-        val IDm = res.copyOfRange(2, 10)
-        Log.d(DEBUG_TAG, "parse IDm: " + toHex(IDm))
+//        val IDm = res.copyOfRange(2, 10)
+//        Log.d(DEBUG_TAG, "parse IDm: " + toHex(IDm))
         val blockNum: Int = res[12].toInt()
         val blockData = res.copyOfRange(13, 13 + 16 * blockNum)
         var str: String = ""
+        val line: String = if (blockData[6] < 0x80) "JR" else "公営/私鉄"
+        Log.d(DEBUG_TAG, "blockData: " + toHex(blockData.copyOfRange(0, 16)))
         for (i in 0..blockNum - 1) {
             val rireki: Rireki = Rireki.parse(blockData, i * 16)
             str += rireki.toString() + "\n"
