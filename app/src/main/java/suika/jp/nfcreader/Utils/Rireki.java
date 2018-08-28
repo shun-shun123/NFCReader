@@ -3,15 +3,16 @@ package suika.jp.nfcreader.Utils;
 import android.util.SparseArray;
 
 public class Rireki {
-    public int termId;
-    public int procId;
-    public int year;
-    public int month;
-    public int day;
-    public String kind;
-    public int remain;
-    public int seqNo;
-    public int reasion;
+    private int termId;
+    private int procId;
+    private int year;
+    private int month;
+    private int day;
+    private String kind;
+    private int remain;
+    private int seqNo;
+    private int reasion;
+    private String line;
 
     public Rireki(){
     }
@@ -30,14 +31,17 @@ public class Rireki {
         this.year  = (mixInt >> 9) & 0x07f;
         this.month = (mixInt >> 5) & 0x00f;
         this.day   = mixInt & 0x01f;
+        this.line = "JR";
 
         if (isBuppan(this.procId)) {
             this.kind = "物販";
         } else if (isBus(this.procId)) {
             this.kind = "バス";
         } else {
-            this.kind = res[off+6] < 0x80 ? "JR" : "公営/私鉄" ;
+//            this.kind = res[off+6] < 0x80 ? "JR" : "公営/私鉄" ;
+            this.kind = PROC_MAP.get(res[off + 1]);
         }
+        this.line = res[off + 6] < 0x80 ? "JR" : "公営/私鉄";
         this.remain  = toInt(res, off, 11,10); //10-11: 残高 (little endian)
         this.seqNo   = toInt(res, off, 12,13,14); //12-14: 連番
         this.reasion = res[off+15]; //15: リージョン
@@ -61,11 +65,12 @@ public class Rireki {
 
     public String toString() {
         String str = seqNo
-                +","+TERM_MAP.get(termId)
-                +","+ PROC_MAP.get(procId)
-                +","+kind
-                +","+year+"/"+month+"/"+day
-                +",残："+remain+"円";
+                +" , "+TERM_MAP.get(termId)
+                +" , "+ PROC_MAP.get(procId)
+                +" , "+kind
+                +" , "+line
+                +" , "+year+"/"+month+"/"+day
+                +" ,残："+remain+"円";
         return str;
     }
 

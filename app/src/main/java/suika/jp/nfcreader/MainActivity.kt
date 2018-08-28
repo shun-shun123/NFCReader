@@ -12,7 +12,6 @@ import kotlinx.android.synthetic.main.activity_main.*
 import suika.jp.nfcreader.Utils.NfcChecker
 import suika.jp.nfcreader.Utils.Rireki
 import java.io.ByteArrayOutputStream
-import kotlin.experimental.and
 
 
 class MainActivity : AppCompatActivity() {
@@ -86,19 +85,12 @@ class MainActivity : AppCompatActivity() {
                 // Read Without Encryption(サービスコード: 0x090f 乗降履歴情報)
                 var targetServiceCode = byteArrayOf(0x09, 0x0f)
                 read.text = IDm.toString()
-                var reqCommand: ByteArray = readWithoutEncryption(IDm, 1)
+                // ICOCAの同時読み出し可能なブロック数の最大値は多分12
+                var reqCommand: ByteArray = readWithoutEncryption(IDm, 12)
                 Log.d(DEBUG_TAG, "----------read Without Encryption(targetServiceCode${toHex(targetServiceCode)})----------")
                 var readRes = nfc.transceive(reqCommand)
                 Log.d(DEBUG_TAG, "Read Without Encryption Result(serviceCode${toHex(targetServiceCode)}): " + toHex(readRes))
                 var parsedReadRes = parse(readRes)
-
-                // Read Without Encryption(サービスコード: 0x008b カード種別およびカード残額情報)
-                targetServiceCode = byteArrayOf(0x00, 0x8b.toByte())
-                reqCommand = readWithoutEncryption(IDm, 1)
-                Log.d(DEBUG_TAG, "----------read Without Encryption(serviceCode${targetServiceCode})----------")
-                readRes = nfc.transceive(reqCommand)
-                Log.d(DEBUG_TAG, "Read Without Encryption Result(serviceCode${toHex(targetServiceCode)})" + toHex(readRes))
-                parsedReadRes = cardInfoParse(readRes)
             } catch (e: Exception) {
                 Log.d(DEBUG_TAG, "Exception: " + e.toString() + "  [cannnot read NFC]")
                 if (nfc.isConnected) {
@@ -152,12 +144,10 @@ class MainActivity : AppCompatActivity() {
         bout.write(serviceCode[1].toInt()) // 履歴のサービスコード下位バイト req[11]（サービスコードはリトルエディアン）
         bout.write(serviceCode[0].toInt()) // 履歴のサービスコード上位バイト req[12]
         bout.write(size)    //ブロック数 req[13]
-        bout.write(0x80)
-        bout.write(0)
-//        for (i in 0..size - 1) {
-//            bout.write(0x80)
-//            bout.write(i)
-//        }
+        for (i in 0..size - 1) {
+            bout.write(0x80)
+            bout.write(i)
+        }
         val commandPacket: ByteArray = bout.toByteArray()
         commandPacket[0] = commandPacket.size.toByte()
         Log.d(DEBUG_TAG, "read Without Encryption Command: " + toHex(commandPacket))
@@ -168,36 +158,19 @@ class MainActivity : AppCompatActivity() {
         if (res[10] != 0x00.toByte()) { // res[10] エラーコード. 0x00が正常
             return "ERROR"
         }
-        val IDm = res.copyOfRange(2, 10)
-        Log.d(DEBUG_TAG, "parse IDm: " + toHex(IDm))
-        val size: Int = res[12].toInt()
+//        val IDm = res.copyOfRange(2, 10)
+//        Log.d(DEBUG_TAG, "parse IDm: " + toHex(IDm))
+        val blockNum: Int = res[12].toInt()
+        val blockData = res.copyOfRange(13, 13 + 16 * blockNum)
         var str: String = ""
-        for (i in 0..size - 1) {
-            val rireki: Rireki = Rireki.parse(res, 13 + i * 16)
+        val line: String = if (blockData[6] < 0x80) "JR" else "公営/私鉄"
+        Log.d(DEBUG_TAG, "blockData: " + toHex(blockData.copyOfRange(0, 16)))
+        for (i in 0..blockNum - 1) {
+            val rireki: Rireki = Rireki.parse(blockData, i * 16)
             str += rireki.toString() + "\n"
         }
         Log.d(DEBUG_TAG, "parseResult: $str")
         return str
-    }
-
-    /*
-    サービスコード: 0x008b(1ブロック)
-    カード種別およびカード残額情報
-     */
-    private fun cardInfoParse(res: ByteArray): String {
-        if (res[10] != 0x00.toByte()) {
-            return "ERROR"
-        }
-        val blockData = res.copyOfRange(13, 29)
-        Log.d(DEBUG_TAG, "blockData: ${toHex(blockData)}")
-        val cardName: String = when (blockData[8] and 0xf0.toByte()) {
-            0x00.toByte() -> "EX-IC"
-            0x02.toByte() -> "Suica"
-            0x03.toByte() -> "ICOCA"
-            else -> "Not in List"
-        }
-        Log.d(DEBUG_TAG, "cardName: $cardName")
-        return cardName
     }
 
     private fun toHex(id: ByteArray): String {
