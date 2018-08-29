@@ -107,6 +107,7 @@ class MainActivity : AppCompatActivity() {
                 json = listAdapter.toJson(list)
                 Log.d(DEBUG_TAG, "JSON DATA: " + json)
                 httpClient.post(json)
+                list.clear()
             } catch (e: Exception) {
                 Log.d(DEBUG_TAG, "Exception: " + e.toString() + "  [cannnot read NFC]")
                 if (nfc.isConnected) {
