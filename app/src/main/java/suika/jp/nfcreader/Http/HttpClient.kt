@@ -4,7 +4,6 @@ import android.util.Log
 import com.github.kittinunf.fuel.Fuel
 import com.github.kittinunf.fuel.httpGet
 import com.github.kittinunf.result.Result
-import java.io.ByteArrayOutputStream
 
 class HttpClient {
     private lateinit var url: String
@@ -15,13 +14,8 @@ class HttpClient {
         Log.d(TAG, "Constructor: " + this.url)
     }
 
-    public fun post() {
-        val data = ByteArrayOutputStream()
-        data.write(0x01)
-        data.write(0x02)
-        data.write(0x03)
-        val body = data.toByteArray()
-        Fuel.post(this.url).body(body).response { request, response, result ->
+    public fun post(data: ByteArray) {
+        Fuel.post(this.url).body(data).response { request, response, result ->
             Log.d(TAG, "request: " + request.toString())
             Log.d(TAG, "resonse: " + response.toString())
             Log.d(TAG, "result: " + result.toString())
