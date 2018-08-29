@@ -71,24 +71,24 @@ class MainActivity : AppCompatActivity() {
                 // targetSystemCode: 0x0003は交通系ICカードのシステムコード
                 val targetSystemCode = byteArrayOf(0x00, 0x03)
                 val pollingCommand = polling(targetSystemCode)
-                Log.d(DEBUG_TAG, "----------polling----------")
+//                Log.d(DEBUG_TAG, "----------polling----------")
                 val pollingRes = nfc.transceive(pollingCommand)
                 // System 0 のIDｍを取得(1バイト目はデータサイズ(20)、2バイト目はレスポンスコード(0x01)、IDmのサイズは8バイト)
                 val IDm = pollingRes.copyOfRange(2, 10)
-                Log.d(DEBUG_TAG, "polling Result: " + toHex(pollingRes))
-                Log.d(DEBUG_TAG, "IDm: " + toHex(IDm))
+//                Log.d(DEBUG_TAG, "polling Result: " + toHex(pollingRes))
+//                Log.d(DEBUG_TAG, "IDm: " + toHex(IDm))
 
                 // RequestResponseでカードの状態を確認
                 val requestResponseCommand = requestResopnse(IDm)
-                Log.d(DEBUG_TAG, "----------Request Response----------")
+//                Log.d(DEBUG_TAG, "----------Request Response----------")
                 val requestResponse = nfc.transceive(requestResponseCommand)
-                Log.d(DEBUG_TAG, "Request Response Result: " + toHex(requestResponse))
+//                Log.d(DEBUG_TAG, "Request Response Result: " + toHex(requestResponse))
 
                 // RequestServiceでエリアやサービスの存在を確認
                 val requestServiceCommand = requestService(IDm)
-                Log.d(DEBUG_TAG, "----------Request Service----------")
+//                Log.d(DEBUG_TAG, "----------Request Service----------")
                 val requestService = nfc.transceive(requestServiceCommand)
-                Log.d(DEBUG_TAG, "Request Service Result: " + toHex(requestService))
+//                Log.d(DEBUG_TAG, "Request Service Result: " + toHex(requestService))
 
                 // Read Without Encryption(サービスコード: 0x090f 乗降履歴情報)
                 var targetServiceCode = byteArrayOf(0x09, 0x0f)
@@ -112,6 +112,7 @@ class MainActivity : AppCompatActivity() {
                 Log.d(DEBUG_TAG, "JSON DATA: " + json)
                 httpClient.post(json)
                 list.clear()
+                readCounter = 0
             } catch (e: Exception) {
                 Log.d(DEBUG_TAG, "Exception: " + e.toString() + "  [cannnot read NFC]")
                 if (nfc.isConnected) {
@@ -147,7 +148,7 @@ class MainActivity : AppCompatActivity() {
 
         val commandPacket = bout.toByteArray()
         commandPacket[0] = commandPacket.size.toByte()
-        Log.d(DEBUG_TAG, "polling Command: " + toHex(commandPacket))
+//        Log.d(DEBUG_TAG, "polling Command: " + toHex(commandPacket))
         return commandPacket
     }
 
@@ -165,13 +166,15 @@ class MainActivity : AppCompatActivity() {
         bout.write(serviceCode[1].toInt()) // 履歴のサービスコード下位バイト req[11]（サービスコードはリトルエディアン）
         bout.write(serviceCode[0].toInt()) // 履歴のサービスコード上位バイト req[12]
         bout.write(size)    //ブロック数 req[13]
-        for (i in 0 + (readCounter * size) ..size - 1 + (readCounter * size)) {
-            bout.write(0x80)
-            bout.write(i)
+        for (i in (0 + (readCounter * size))..(size - 1 + (readCounter * size))) {
+            bout.write(0x00)
+            bout.write((i and 0x0f))
+            bout.write((i and 0xf0) shr 8)
+            Log.d("NUMNUM", "今はこれ！: $i")
         }
         val commandPacket: ByteArray = bout.toByteArray()
         commandPacket[0] = commandPacket.size.toByte()
-        Log.d(DEBUG_TAG, "read Without Encryption Command: " + toHex(commandPacket))
+//        Log.d(DEBUG_TAG, "read Without Encryption Command: " + toHex(commandPacket))
         return commandPacket //req[0]
     }
 
@@ -187,15 +190,15 @@ class MainActivity : AppCompatActivity() {
             val rireki: Rireki = Rireki.parse(blockData, i * 16)
             str += rireki.toString() + "\n"
             val suika: Suika = rireki.suika
-            // list.sizeが15になればaddをやめる
+            if (suika.terminal == "改札機" || suika.terminal == "簡易改札機") {
+                Log.d("NUMNUM", rireki.toString())
+                list.add(rireki.suika)
+            }
             if (list.size == 15) {
                 break
             }
-            if (suika.terminal == "改札機") {
-                list.add(rireki.suika)
-            }
         }
-        Log.d(DEBUG_TAG, "parseResult: $str")
+//        Log.d(DEBUG_TAG, "parseResult: $str")
         return str
     }
 
@@ -221,7 +224,7 @@ class MainActivity : AppCompatActivity() {
         bout.write(IDm)        // IDm
         val commandPacket = bout.toByteArray()
         commandPacket[0] = commandPacket.size.toByte()
-        Log.d(DEBUG_TAG, "request Response Command: " + toHex(commandPacket))
+//        Log.d(DEBUG_TAG, "request Response Command: " + toHex(commandPacket))
         return commandPacket
     }
 
@@ -241,7 +244,7 @@ class MainActivity : AppCompatActivity() {
         bout.write(serviceCode[0].toInt())
         val commandPacket = bout.toByteArray()
         commandPacket[0] = commandPacket.size.toByte()
-        Log.d(DEBUG_TAG, "request ServicefCommand: " + toHex(commandPacket))
+//        Log.d(DEBUG_TAG, "request ServicefCommand: " + toHex(commandPacket))
         return commandPacket
     }
 }
