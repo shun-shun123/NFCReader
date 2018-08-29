@@ -29,11 +29,6 @@ class MainActivity : AppCompatActivity() {
         // NFCを扱うためのインスタンスを取得
         mNfcAdapter = NfcAdapter.getDefaultAdapter(this)
         this.NfcChecker.checkEnable(mNfcAdapter, this@MainActivity)
-        button.setOnClickListener {
-            val httpClient: HttpClient = HttpClient("https://script.google.com/macros/s/AKfycbymy6K0KVO_OqSkv6TNFxBqmon9g_jCfPPfNXRH7lwOciR4ETY/exec")
-            httpClient.post()
-//            httpClient.get()
-        }
     }
 
     override fun onResume() {
@@ -98,8 +93,8 @@ class MainActivity : AppCompatActivity() {
                 var readRes = nfc.transceive(reqCommand)
                 Log.d(DEBUG_TAG, "Read Without Encryption Result(serviceCode${toHex(targetServiceCode)}): " + toHex(readRes))
                 var parsedReadRes = parse(readRes)
-                httpClient.post(readRes)
-            } catch (e: Exception)
+                httpClient.post(parsedReadRes)
+            } catch (e: Exception) {
                 Log.d(DEBUG_TAG, "Exception: " + e.toString() + "  [cannnot read NFC]")
                 if (nfc.isConnected) {
                     nfc.close()
