@@ -26,6 +26,7 @@ class MainActivity : AppCompatActivity() {
     private val DEBUG_TAG: String = "FeliCa"
     private val httpClient: HttpClient = HttpClient("https://script.google.com/macros/s/AKfycbxWAZpk0m3Xe3CWt80IZwncvgjowlT4FTdannJlaHofOFUGcKcC/exec")
     private var list: MutableList<Suika> = mutableListOf()
+    private var readCounter: Int = 0
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -93,11 +94,14 @@ class MainActivity : AppCompatActivity() {
                 var targetServiceCode = byteArrayOf(0x09, 0x0f)
                 read.text = IDm.toString()
                 // ICOCAの同時読み出し可能なブロック数の最大値は多分12
-                var reqCommand: ByteArray = readWithoutEncryption(IDm, 12)
-                Log.d(DEBUG_TAG, "----------read Without Encryption(targetServiceCode${toHex(targetServiceCode)})----------")
-                var readRes = nfc.transceive(reqCommand)
-                Log.d(DEBUG_TAG, "Read Without Encryption Result(serviceCode${toHex(targetServiceCode)}): " + toHex(readRes))
-                var parsedReadRes = parse(readRes)
+                while (list.size < 15) {
+                    var reqCommand: ByteArray = readWithoutEncryption(IDm, 12)
+                    Log.d(DEBUG_TAG, "----------read Without Encryption(targetServiceCode${toHex(targetServiceCode)})----------")
+                    var readRes = nfc.transceive(reqCommand)
+                    Log.d(DEBUG_TAG, "Read Without Encryption Result(serviceCode${toHex(targetServiceCode)}): " + toHex(readRes))
+                    var parsedReadRes = parse(readRes)
+                    readCounter++
+                }
 
                 // JSONデータ作ってPOST
                 var json: String = ""
@@ -161,7 +165,7 @@ class MainActivity : AppCompatActivity() {
         bout.write(serviceCode[1].toInt()) // 履歴のサービスコード下位バイト req[11]（サービスコードはリトルエディアン）
         bout.write(serviceCode[0].toInt()) // 履歴のサービスコード上位バイト req[12]
         bout.write(size)    //ブロック数 req[13]
-        for (i in 0..size - 1) {
+        for (i in 0 + (readCounter * size) ..size - 1 + (readCounter * size)) {
             bout.write(0x80)
             bout.write(i)
         }
@@ -178,12 +182,18 @@ class MainActivity : AppCompatActivity() {
         val blockNum: Int = res[12].toInt()
         val blockData = res.copyOfRange(13, 13 + 16 * blockNum)
         var str: String = ""
-        val line: String = if (blockData[6] < 0x80) "JR" else "公営/私鉄"
         Log.d(DEBUG_TAG, "blockData: " + toHex(blockData.copyOfRange(0, 16)))
         for (i in 0..blockNum - 1) {
             val rireki: Rireki = Rireki.parse(blockData, i * 16)
             str += rireki.toString() + "\n"
-            list.add(rireki.suika)
+            val suika: Suika = rireki.suika
+            // list.sizeが15になればaddをやめる
+            if (list.size == 15) {
+                break
+            }
+            if (suika.terminal == "改札機") {
+                list.add(rireki.suika)
+            }
         }
         Log.d(DEBUG_TAG, "parseResult: $str")
         return str
