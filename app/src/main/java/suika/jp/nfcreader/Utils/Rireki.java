@@ -67,14 +67,12 @@ public class Rireki {
         this.line = res[off + 6] < 0x80 ? "JR" : "公営/私鉄";
         this.remain  = toInt(res, off, 11,10); //10-11: 残高 (little endian)
         this.seqNo   = toInt(res, off, 12,13,14); //12-14: 連番
-        this.inRegion = String.valueOf(res[off + 15] & 0xc0);
-        this.inLine = String.valueOf(res[off + 6]);
-        this.inStation = String.valueOf(res[off + 7]);
-        this.outRegion = String.valueOf(res[off + 15] & 0x30);
-        this.outLine = String.valueOf(res[off + 8]);
-        this.outStation = String.valueOf(res[off + 9]);
-
-
+        this.inRegion = String.valueOf((res[off + 15] >> 6) & 0x03);
+        this.inLine = String.format("%02X", res[off + 6]);
+        this.inStation = String.format("%02X",res[off + 7]);
+        this.outRegion = String.valueOf((res[off + 15] >> 4) & 0x03);
+        this.outLine = String.format("%02X", res[off + 8]);
+        this.outStation = String.format("%02X", res[off + 9]);
     }
 
     private int toInt(byte[] res, int off, int... idx) {
