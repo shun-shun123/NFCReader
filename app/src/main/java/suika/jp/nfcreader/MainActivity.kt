@@ -9,6 +9,7 @@ import android.os.Bundle
 import android.support.v7.app.AppCompatActivity
 import android.util.Log
 import kotlinx.android.synthetic.main.activity_main.*
+import suika.jp.nfcreader.Http.HttpClient
 import suika.jp.nfcreader.Utils.NfcChecker
 import suika.jp.nfcreader.Utils.Rireki
 import java.io.ByteArrayOutputStream
@@ -27,6 +28,11 @@ class MainActivity : AppCompatActivity() {
         // NFCを扱うためのインスタンスを取得
         mNfcAdapter = NfcAdapter.getDefaultAdapter(this)
         this.NfcChecker.checkEnable(mNfcAdapter, this@MainActivity)
+        button.setOnClickListener {
+            val httpClient: HttpClient = HttpClient("https://script.google.com/macros/s/AKfycbymy6K0KVO_OqSkv6TNFxBqmon9g_jCfPPfNXRH7lwOciR4ETY/exec")
+            httpClient.post()
+//            httpClient.get()
+        }
     }
 
     override fun onResume() {
