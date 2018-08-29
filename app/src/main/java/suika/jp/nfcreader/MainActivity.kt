@@ -192,7 +192,7 @@ class MainActivity : AppCompatActivity() {
             val suika: Suika = rireki.suika
             if (suika.terminal == "改札機" || suika.terminal == "簡易改札機") {
                 Log.d("NUMNUM", rireki.toString())
-                list.add(rireki.suika)
+                list.add(suika)
             }
             if (list.size == 15) {
                 break
