@@ -8,8 +8,12 @@ import android.nfc.tech.NfcF
 import android.os.Bundle
 import android.support.v7.app.AppCompatActivity
 import android.util.Log
+import com.squareup.moshi.JsonAdapter
+import com.squareup.moshi.Moshi
+import com.squareup.moshi.Types
 import kotlinx.android.synthetic.main.activity_main.*
 import suika.jp.nfcreader.Http.HttpClient
+import suika.jp.nfcreader.Json.Suika
 import suika.jp.nfcreader.Utils.NfcChecker
 import suika.jp.nfcreader.Utils.Rireki
 import java.io.ByteArrayOutputStream
@@ -20,7 +24,8 @@ class MainActivity : AppCompatActivity() {
     private var mNfcAdapter: NfcAdapter? = null
     private val NfcChecker: NfcChecker = NfcChecker()
     private val DEBUG_TAG: String = "FeliCa"
-    private val httpClient: HttpClient = HttpClient("https://script.google.com/macros/s/AKfycbymy6K0KVO_OqSkv6TNFxBqmon9g_jCfPPfNXRH7lwOciR4ETY/exec")
+    private val httpClient: HttpClient = HttpClient("https://script.google.com/macros/s/AKfycbxWAZpk0m3Xe3CWt80IZwncvgjowlT4FTdannJlaHofOFUGcKcC/exec")
+    private var list: MutableList<Suika> = mutableListOf()
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -93,7 +98,15 @@ class MainActivity : AppCompatActivity() {
                 var readRes = nfc.transceive(reqCommand)
                 Log.d(DEBUG_TAG, "Read Without Encryption Result(serviceCode${toHex(targetServiceCode)}): " + toHex(readRes))
                 var parsedReadRes = parse(readRes)
-                httpClient.post(parsedReadRes)
+
+                // JSONデータ作ってPOST
+                var json: String = ""
+                val moshi = Moshi.Builder().build()
+                val type = Types.newParameterizedType(List::class.java, Suika::class.java)
+                val listAdapter: JsonAdapter<MutableList<Suika>> = moshi.adapter(type)
+                json = listAdapter.toJson(list)
+                Log.d(DEBUG_TAG, "JSON DATA: " + json)
+                httpClient.post(json)
             } catch (e: Exception) {
                 Log.d(DEBUG_TAG, "Exception: " + e.toString() + "  [cannnot read NFC]")
                 if (nfc.isConnected) {
@@ -161,8 +174,6 @@ class MainActivity : AppCompatActivity() {
         if (res[10] != 0x00.toByte()) { // res[10] エラーコード. 0x00が正常
             return "ERROR"
         }
-//        val IDm = res.copyOfRange(2, 10)
-//        Log.d(DEBUG_TAG, "parse IDm: " + toHex(IDm))
         val blockNum: Int = res[12].toInt()
         val blockData = res.copyOfRange(13, 13 + 16 * blockNum)
         var str: String = ""
@@ -171,6 +182,7 @@ class MainActivity : AppCompatActivity() {
         for (i in 0..blockNum - 1) {
             val rireki: Rireki = Rireki.parse(blockData, i * 16)
             str += rireki.toString() + "\n"
+            list.add(rireki.suika)
         }
         Log.d(DEBUG_TAG, "parseResult: $str")
         return str
