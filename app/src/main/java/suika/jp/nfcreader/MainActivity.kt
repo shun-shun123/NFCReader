@@ -141,9 +141,10 @@ class MainActivity : AppCompatActivity() {
             }
         }
 
-        //ユーザがカードをかざすとNow Loading ...に代わる
-        val LodingCmplText: String = "Complete Loading !!"
-        read.text = LodingCmplText
+
+        val intentforCmpletion = Intent(this, CompleteReadActivity::class.java);
+        startActivity(intentforCmpletion);
+
     }
 
     private fun polling(systemCode: ByteArray): ByteArray {

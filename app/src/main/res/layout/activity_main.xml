@@ -18,7 +18,7 @@
         android:required="true"
         android:text="TextView"
         android:textAppearance="@style/TextAppearance.AppCompat.Large"
-        android:textSize="36sp"
+        android:textSize="24sp"
         app:layout_constraintBottom_toBottomOf="parent"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintHorizontal_bias="0.0"
