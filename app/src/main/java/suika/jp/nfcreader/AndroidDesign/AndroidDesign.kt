@@ -15,9 +15,6 @@ class AndroidDesign {
     val Int.red get() = Color.red(this)
     val Int.blue get() = Color.blue(this)
     val Int.green get() = Color.green(this)
-    //private val mHandler = Handler()
-    //private val mScheduledExecutor: ScheduledExecutorService? = null
-    //private val mLblMeasuring: TextView? = null
 
     fun colorAnimation(view: View, fromColor: Int, toColor: Int) =
             ValueAnimator.ofFloat(0f, 1f).apply {

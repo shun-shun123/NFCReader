@@ -36,6 +36,7 @@
                 android:resource="@xml/nfc_tech_filter"/>
         </activity>
         <activity
+            android:parentActivityName=".MainActivity"
             android:name=".CompleteReadActivity"
             android:label="@string/app_name" >
         </activity>

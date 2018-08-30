@@ -5,17 +5,14 @@ import android.content.Intent
 import android.nfc.NfcAdapter
 import android.nfc.Tag
 import android.nfc.tech.NfcF
-import android.opengl.GLSurfaceView
 import android.os.Bundle
 import android.support.v7.app.AppCompatActivity
 import android.util.Log
-import android.view.View
 import com.squareup.moshi.JsonAdapter
 import com.squareup.moshi.Moshi
 import com.squareup.moshi.Types
 import kotlinx.android.synthetic.main.activity_main.*
 import suika.jp.nfcreader.AndroidDesign.AndroidDesign
-import suika.jp.nfcreader.AndroidDesign.GLRenderer
 import suika.jp.nfcreader.Http.HttpClient
 import suika.jp.nfcreader.Json.Suika
 import suika.jp.nfcreader.Utils.NfcChecker
@@ -43,14 +40,6 @@ class MainActivity : AppCompatActivity() {
 
     override fun onResume() {
         super.onResume()
-//        //ココカラ
-//        val glSurfaceView = GLSurfaceView(this);
-//        glSurfaceView.setEGLContextClientVersion(2);
-//        val mRenderer: GLRenderer = GLRenderer();
-//        glSurfaceView.setRenderer(mRenderer);
-//        glSurfaceView.setRenderMode(GLSurfaceView.RENDERMODE_CONTINUOUSLY);
-//        setContentView(glSurfaceView)
-//        //ココマデ
         if (mNfcAdapter != null) {
             //ユーザがカードをかざすまでは文字が点滅する
             val str: String = "Please hold the IC card"
@@ -141,8 +130,7 @@ class MainActivity : AppCompatActivity() {
             }
         }
 
-
-        val intentforCmpletion = Intent(this, CompleteReadActivity::class.java);
+        val intentforCmpletion = Intent(getApplication(), CompleteReadActivity::class.java);
         startActivity(intentforCmpletion);
 
     }
