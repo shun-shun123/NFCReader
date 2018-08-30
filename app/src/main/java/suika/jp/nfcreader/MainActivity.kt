@@ -5,13 +5,17 @@ import android.content.Intent
 import android.nfc.NfcAdapter
 import android.nfc.Tag
 import android.nfc.tech.NfcF
+import android.opengl.GLSurfaceView
 import android.os.Bundle
 import android.support.v7.app.AppCompatActivity
 import android.util.Log
+import android.view.View
 import com.squareup.moshi.JsonAdapter
 import com.squareup.moshi.Moshi
 import com.squareup.moshi.Types
 import kotlinx.android.synthetic.main.activity_main.*
+import suika.jp.nfcreader.AndroidDesign.AndroidDesign
+import suika.jp.nfcreader.AndroidDesign.GLRenderer
 import suika.jp.nfcreader.Http.HttpClient
 import suika.jp.nfcreader.Json.Suika
 import suika.jp.nfcreader.Utils.NfcChecker
@@ -27,11 +31,11 @@ class MainActivity : AppCompatActivity() {
     private val httpClient: HttpClient = HttpClient("https://script.google.com/macros/s/AKfycbxWAZpk0m3Xe3CWt80IZwncvgjowlT4FTdannJlaHofOFUGcKcC/exec")
     private var list: MutableList<Suika> = mutableListOf()
     private var readCounter: Int = 0
+    val design: AndroidDesign = AndroidDesign()
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_main)
-
         // NFCを扱うためのインスタンスを取得
         mNfcAdapter = NfcAdapter.getDefaultAdapter(this)
         this.NfcChecker.checkEnable(mNfcAdapter, this@MainActivity)
@@ -39,7 +43,19 @@ class MainActivity : AppCompatActivity() {
 
     override fun onResume() {
         super.onResume()
+//        //ココカラ
+//        val glSurfaceView = GLSurfaceView(this);
+//        glSurfaceView.setEGLContextClientVersion(2);
+//        val mRenderer: GLRenderer = GLRenderer();
+//        glSurfaceView.setRenderer(mRenderer);
+//        glSurfaceView.setRenderMode(GLSurfaceView.RENDERMODE_CONTINUOUSLY);
+//        setContentView(glSurfaceView)
+//        //ココマデ
         if (mNfcAdapter != null) {
+            //ユーザがカードをかざすまでは文字が点滅する
+            val str: String = "Please hold the IC card"
+            read.text = str
+            design.fadeText(read, 2000, 1.0f, 0.0f)
             // 起動中のActivityが優先的にNFCを受け取れるよう設定
             val intent: Intent = Intent(this@MainActivity, this::class.java).setFlags(Intent.FLAG_ACTIVITY_SINGLE_TOP)
             val pendingIntent: PendingIntent = PendingIntent.getActivity(applicationContext, 0, intent, 0)
@@ -56,7 +72,11 @@ class MainActivity : AppCompatActivity() {
     }
 
     override fun onNewIntent(intent: Intent?) {
+        //ユーザがカードをかざすとNow Loading ...に代わる
+        val LodingText: String = "Now Loading ..."
+        read.text = LodingText
         super.onNewIntent(intent)
+        //design.colorAnimation(read, 0, 255)
         val action: String? = intent?.action
         if (NfcAdapter.ACTION_NDEF_DISCOVERED.equals(action)
                 || NfcAdapter.ACTION_TAG_DISCOVERED.equals(action)
@@ -120,6 +140,10 @@ class MainActivity : AppCompatActivity() {
                 }
             }
         }
+
+        //ユーザがカードをかざすとNow Loading ...に代わる
+        val LodingCmplText: String = "Complete Loading !!"
+        read.text = LodingCmplText
     }
 
     private fun polling(systemCode: ByteArray): ByteArray {
