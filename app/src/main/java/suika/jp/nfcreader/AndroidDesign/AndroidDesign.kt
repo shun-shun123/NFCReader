@@ -43,5 +43,4 @@ class AndroidDesign {
         view.startAnimation(aanim1)
     }
 
-
 }
