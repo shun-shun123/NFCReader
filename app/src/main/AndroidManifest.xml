@@ -40,5 +40,6 @@
     <uses-permission android:name="android.permission.NFC"/>
     <!--PlayストアでNFC搭載デバイスのみに表示する-->
     <uses-feature android:name="android.hardware.nfc"/>
+    <uses-permission android:name="android.permission.INTERNET"/>
 
 </manifest>

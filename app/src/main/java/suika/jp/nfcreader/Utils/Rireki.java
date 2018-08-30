@@ -2,6 +2,8 @@ package suika.jp.nfcreader.Utils;
 
 import android.util.SparseArray;
 
+import suika.jp.nfcreader.Json.Suika;
+
 public class Rireki {
     private int termId;
     private int procId;
@@ -11,16 +13,37 @@ public class Rireki {
     private String kind;
     private int remain;
     private int seqNo;
-    private int reasion;
     private String line;
+    private String inRegion;
+    private String inLine;
+    private String inStation;
+    private String outRegion;
+    private String outLine;
+    private String outStation;
+
 
     public Rireki(){
     }
+
 
     public static Rireki parse(byte[] res, int off) {
         Rireki self = new Rireki();
         self.init(res, off);
         return self;
+    }
+
+    public Suika getSuika() {
+        Suika data = new Suika(TERM_MAP.get(this.termId),
+                                PROC_MAP.get(this.procId),
+                                this.inRegion,
+                                this.inLine,
+                                this.inStation,
+                                this.outRegion,
+                                this.outLine,
+                                this.outStation,
+                                this.year + "/" + this.month + "/" + this.day,
+                                this.remain);
+        return data;
     }
 
     private void init(byte[] res, int off) {
@@ -44,7 +67,12 @@ public class Rireki {
         this.line = res[off + 6] < 0x80 ? "JR" : "公営/私鉄";
         this.remain  = toInt(res, off, 11,10); //10-11: 残高 (little endian)
         this.seqNo   = toInt(res, off, 12,13,14); //12-14: 連番
-        this.reasion = res[off+15]; //15: リージョン
+        this.inRegion = String.valueOf((res[off + 15] >> 6) & 0x03);
+        this.inLine = String.format("%02X", res[off + 6]);
+        this.inStation = String.format("%02X",res[off + 7]);
+        this.outRegion = String.valueOf((res[off + 15] >> 4) & 0x03);
+        this.outLine = String.format("%02X", res[off + 8]);
+        this.outStation = String.format("%02X", res[off + 9]);
     }
 
     private int toInt(byte[] res, int off, int... idx) {
